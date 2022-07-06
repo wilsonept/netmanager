@@ -20,7 +20,7 @@ def home():
 @app.route("login")
 def login():
     # TODO Форма авторизации.
-    return redirect(url_for("login"))
+    return redirect(url_for("login.html"))
 
 
 @app.route("logout")
