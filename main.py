@@ -1,9 +1,10 @@
 from flask import redirect, url_for, render_template, request, flash
 from flask_login import current_user, login_user, login_required, logout_user
 
-from application import app, LOGIN_MANAGER as log_man
+from application import app, conf, LOGIN_MANAGER as log_man
 from models import User
-from forms import LoginForm
+from forms import LoginForm, AdminForm
+from utils import get_iface_cidrs 
 
 """Файл запуска приложения/файл маршрутов."""
 
@@ -27,8 +28,13 @@ def home():
 @app.route("/admin", methods=["GET", "POST"])
 @login_required
 def admin():
+    cidrs = get_iface_cidrs(conf["iface"])
+    
+    addresses = {cidr:cidr for cidr in cidrs}
+    form = AdminForm(addresses=addresses)
     if current_user.is_authenticated:
-        return render_template("admin.html")
+
+        return render_template("admin.html", form=form)
     return render_template("login.html")
 
 
@@ -68,4 +74,4 @@ def logout():
 # TODO Изменение маски.
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=5000, debug=True)
+    app.run(host="localhost", port=5000)

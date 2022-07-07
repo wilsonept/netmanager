@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField
+from wtforms import BooleanField, FieldList, FormField
 from wtforms.validators import DataRequired, StopValidation
 
 """Файл с формами приложения."""
@@ -29,8 +30,13 @@ class LoginForm(FlaskForm):
     submit = SubmitField(label="Войти")
 
 
-class LoginForm(FlaskForm):
+class IPAddressEntryForm(FlaskForm):
+    """Форма одной записи IP адреса."""
+    address = StringField(validators=[MyDataRequired()])
+    netmask = StringField(validators=[MyDataRequired()])
+    delete = BooleanField()
+
+class AdminForm(FlaskForm):
     """Форма администратора."""
-    login = StringField(label="Логин", validators=[MyDataRequired()])
-    passwd = PasswordField(label="Пароль", validators=[MyDataRequired()])
-    submit = SubmitField(label="Войти")
+    addresses = FieldList(FormField(IPAddressEntryForm), min_entries=0)
+    submit = SubmitField(label="Применить")
