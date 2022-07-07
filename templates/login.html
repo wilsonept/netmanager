@@ -5,25 +5,25 @@
 {% block content %}
 
     <main class="d-flex h-100 w-100 justify-content-center align-items-center">
-        <form class="form__custom d-flex flex-column border rounded-3 px-5 pb-3" method="POST" action="{{ url_for('login') }}" novalidate>
+        <form class="d-flex flex-column border rounded-3 px-5 pb-3" method="POST" action="{{ url_for('login') }}" novalidate>
 
             {{ form.csrf_token }}
 
             <!-- заголовок формы -->
-            <h1 class="mt-5 text-light">Netmanager</h1>
+            <h1 class="mt-5">Netmanager</h1>
             
             <!-- поля формы с обработкой ошибок -->
-            <label class="my-2 text-light form-label">{{ form.name.label }}</label>
-                {% if not "name" in errors %}
-                    {{ form.name(class_="form-control") }}
+            <label class="my-2 form-label">{{ form.login.label }}</label>
+                {% if not "login" in errors %}
+                    {{ form.login(class_="form-control") }}
                 {% else %}
-                    {{ form.name(class_="form-control border border-danger border-2") }}
-                    {% for error in errors["name"] %}
-                        <p class="text-danger">{{ errors["name"][0] }}</p>
+                    {{ form.login(class_="form-control border border-danger border-2") }}
+                    {% for error in errors["login"] %}
+                        <p class="text-danger">{{ errors["login"][0] }}</p>
                     {% endfor %}
                 {% endif %}
 
-            <label class="my-2 text-light form-label">{{ form.passwd.label }}</label>
+            <label class="my-2 form-label">{{ form.passwd.label }}</label>
                 {% if not "passwd" in errors %}
                     {{ form.passwd(class_="form-control") }}
                 {% else %}
@@ -32,6 +32,9 @@
                         <p class="text-danger">{{ errors["passwd"][0] }}</p>
                     {% endfor %}
                 {% endif %}
+                {% for message in get_flashed_messages() %}
+                    <p class="text-danger">{{ message }}</p>
+                {% endfor %}
 
 
             <!-- кнопка подтверждения формы -->
