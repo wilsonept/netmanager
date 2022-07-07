@@ -1,5 +1,6 @@
 import subprocess
 import json
+import time
 import os
 
 """
@@ -31,6 +32,7 @@ def validate_conf(conf) -> bool:
     
         conf["iface"] = get_iface()
     
+    
     # Проверяем поле gateway
     if not "gateway" in conf.keys():
         print("В файле конфигурации не указан основной шлюз.",
@@ -39,7 +41,6 @@ def validate_conf(conf) -> bool:
         conf["gateway"] = get_gateway(conf["iface"])
 
     return True
-
 
 # Получение основного интерфейса.
 def get_iface():
@@ -82,7 +83,7 @@ def get_gateway(iface: str):
         return gate
 
 # Включение/выключение интерфейса.
-def set_iface_link(iface: str, state: str):
+def set_iface_link(conf: dict, state: str):
     """
     Функция включения/отключения интерфейса.
     Принимает:
@@ -93,6 +94,7 @@ def set_iface_link(iface: str, state: str):
         raise Exception("Параметр state указан не верно, используйте 'up' или 'down'")
 
     gate = conf["gateway"] if conf["gateway"] else ""
+    iface = conf["iface"]
 
     # Включаем или отключаем интерфейс.
     ip_link_sh = os.getcwd() + "/scripts/" + "ip_link.sh"
@@ -101,11 +103,9 @@ def set_iface_link(iface: str, state: str):
     if sproc_link.stderr:
         raise Exception(sproc_link.stderr)
     
-    return get_iface_cidrs(iface)
-    
     
 # Добавление/удаление адреса.
-def set_iface_ip(iface: str, action: str, addr: str, mask: str):
+def set_iface_ip(conf: dict, action: str, addr: str, mask: str):
     """
     Функция добавления/удаления интерфейса.
     Принимает:
@@ -119,6 +119,7 @@ def set_iface_ip(iface: str, action: str, addr: str, mask: str):
         raise Exception("Параметр action указан не верно, используйте 'up' или 'down'")
 
     gate = conf["gateway"] if conf["gateway"] else ""
+    iface = conf["iface"]
 
     # Добавляем/удаляем ip адрес.
     ip_addr_sh = os.getcwd() + "/scripts/" + "ip_addr.sh"
@@ -126,8 +127,6 @@ def set_iface_ip(iface: str, action: str, addr: str, mask: str):
     sproc_link = subprocess.run(args, capture_output=True)
     if sproc_link.stderr:
         raise Exception(sproc_link.stderr)
-    
-    return get_iface_cidrs(iface)
 
 # TODO Изменение адреса/маски.
 def set_iface_ip_mask(iface: str, old_addr: str, old_mask,
@@ -139,11 +138,10 @@ def set_iface_ip_mask(iface: str, old_addr: str, old_mask,
 
     # Удаляет указанный CIDR адрес.
     set_iface_ip(iface, "del", old_addr, old_mask)
+    time.sleep(2)
 
     # Добавляет указанный CIDR адрес.
     set_iface_ip(iface, "add", addr, mask)
-
-    return get_iface_cidrs(iface)
 
 
 if __name__ == "__main__":
@@ -163,12 +161,12 @@ if __name__ == "__main__":
     print(f"\n{get_iface_cidrs.__name__}", get_iface_cidrs(conf["iface"]))
     
     # Включение/отключение интерфейса.
-    print(f"\n{set_iface_link.__name__}", set_iface_link(conf["iface"], "down"))
-    print(f"\n{set_iface_link.__name__}", set_iface_link(conf["iface"], "up"))
+    print(f"\n{set_iface_link.__name__}", set_iface_link(conf, "down"))
+    print(f"\n{set_iface_link.__name__}", set_iface_link(conf, "up"))
     
     # Добавление/удаление ip адреса.
     print(f"\n{set_iface_ip.__name__}",
-          set_iface_ip(conf["iface"], "del", "10.0.0.0", "24"))
+          set_iface_ip(conf, "del", "10.0.0.0", "24"))
 
     print(f"\n{set_iface_ip.__name__}",
           set_iface_ip(conf["iface"], "add", "10.0.0.0", "24"))
