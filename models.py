@@ -1,11 +1,12 @@
 import sys
+from flask_login import UserMixin
 
 from application import DB as db
 
 """Файл моделей и логики работы с БД."""
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     """Таблица пользователей."""
     __tablename__ = "users"
 
@@ -37,6 +38,7 @@ def self_db_rebuild(force=False):
     # Создаем пользователя.
     db.session.add(User(name="netmanager", passwd="1"))
     db.session.commit()
+
 
 if __name__ == "__main__":
     if "rebuild" in sys.argv:

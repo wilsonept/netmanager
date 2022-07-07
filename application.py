@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 
 from utils import load_json, validate_conf
 
@@ -9,6 +10,7 @@ from utils import load_json, validate_conf
 
 def create_app(conf):
     global DB
+    global LOGIN_MANAGER
 
     app = Flask(__name__)
     app.config["SECRET_KEY"]=conf["app_secret"]
@@ -22,6 +24,10 @@ def create_app(conf):
 
     # Инициализация БД.
     DB = SQLAlchemy(app)
+
+    # Инициализация модуля аутентификации.
+    LOGIN_MANAGER = LoginManager()
+    LOGIN_MANAGER.init_app(app)
 
     return app
 
