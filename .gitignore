@@ -2,3 +2,4 @@ venv
 config.json
 testing
 __pycache__
+netmgr.db

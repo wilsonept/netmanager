@@ -1,4 +1,3 @@
-from asyncio import subprocess
 import subprocess
 import json
 import os
@@ -42,7 +41,7 @@ def validate_conf(conf) -> bool:
     return True
 
 
-# TODO Получение основного интерфейса.
+# Получение основного интерфейса.
 def get_iface():
     """Определяет основной интерфейс по дефолтному маршруту."""
     args = ["ip", "-o", "-4", "route", "show", "to", "default"]
@@ -57,7 +56,7 @@ def get_iface():
 
     raise Exception("Не удалось определить основной интерфейс, укажите его в config.json вручную.")
 
-# TODO Получение информации о состоянии интерфейса.
+# Получение информации о состоянии интерфейса.
 def get_iface_cidrs(iface) -> list:
     """Возвращает список CIDR адресов на интерфейсе."""
     args = ["ip", "-o", "-4", "addr", "show", "dev", iface]
@@ -70,7 +69,7 @@ def get_iface_cidrs(iface) -> list:
     if result:
         return result
 
-# TODO Получаем адрес роутера.
+# Получаем адрес роутера.
 def get_gateway(iface: str):
     """Получает ip адрес шлюза"""
     args = ["ip", "-o", "-4", "route", "show", "to", "default"]
@@ -82,7 +81,7 @@ def get_gateway(iface: str):
         gate = sproc.stdout.split()[2].decode("utf8")
         return gate
 
-# TODO Включение/выключение интерфейса.
+# Включение/выключение интерфейса.
 def set_iface_link(iface: str, state: str):
     """
     Функция включения/отключения интерфейса.
@@ -102,10 +101,10 @@ def set_iface_link(iface: str, state: str):
     if sproc_link.stderr:
         raise Exception(sproc_link.stderr)
     
-    print(get_iface_cidrs(iface))
+    return get_iface_cidrs(iface)
     
     
-# TODO Добавление/удаление адреса.
+# Добавление/удаление адреса.
 def set_iface_ip(iface: str, action: str, addr: str, mask: str):
     """
     Функция добавления/удаления интерфейса.
@@ -128,10 +127,23 @@ def set_iface_ip(iface: str, action: str, addr: str, mask: str):
     if sproc_link.stderr:
         raise Exception(sproc_link.stderr)
     
-    print(get_iface_cidrs(iface))
+    return get_iface_cidrs(iface)
 
-# TODO Изменение адреса.
-# TODO Изменение маски.
+# TODO Изменение адреса/маски.
+def set_iface_ip_mask(iface: str, old_addr: str, old_mask,
+                      addr: str, mask: str):
+    """
+    Изменяет указанный ip и маску на указанном интерфейсе
+    путем пересоздания адреса интерфейса.
+    """
+
+    # Удаляет указанный CIDR адрес.
+    set_iface_ip(iface, "del", old_addr, old_mask)
+
+    # Добавляет указанный CIDR адрес.
+    set_iface_ip(iface, "add", addr, mask)
+
+    return get_iface_cidrs(iface)
 
 
 if __name__ == "__main__":
@@ -155,5 +167,17 @@ if __name__ == "__main__":
     print(f"\n{set_iface_link.__name__}", set_iface_link(conf["iface"], "up"))
     
     # Добавление/удаление ip адреса.
-    print(f"\n{set_iface_ip.__name__}", set_iface_ip(conf["iface"], "del", "10.0.0.0", "24"))
-    print(f"\n{set_iface_ip.__name__}", set_iface_ip(conf["iface"], "add", "10.0.0.0", "24"))
+    print(f"\n{set_iface_ip.__name__}",
+          set_iface_ip(conf["iface"], "del", "10.0.0.0", "24"))
+
+    print(f"\n{set_iface_ip.__name__}",
+          set_iface_ip(conf["iface"], "add", "10.0.0.0", "24"))
+
+    # Изменение адреса/маски.
+    print(f"\n{set_iface_ip_mask.__name__}",
+          set_iface_ip_mask(conf["iface"], "10.0.0.0", "24", "10.1.1.1", "24")
+    )
+
+    print(f"\n{set_iface_ip_mask.__name__}",
+          set_iface_ip_mask(conf["iface"], "10.1.1.1", "24", "10.0.0.0", "24")
+    )
