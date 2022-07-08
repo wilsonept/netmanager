@@ -31,7 +31,7 @@ class LoginForm(FlaskForm):
 
 
 class IPAddressEntryForm(FlaskForm):
-    """Форма одной записи IP адреса."""
+    """Форма одной записи IP адреса.  """
     cidr = StringField(validators=[MyDataRequired()])
     delete = BooleanField()
 

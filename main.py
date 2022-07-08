@@ -28,7 +28,7 @@ def home():
         return redirect(url_for("login"))
 
 
-@app.route("/admin", methods=["GET", "POST"])
+@app.route("/admin", methods=["GET"])
 @login_required
 def admin():
     cidrs = get_iface_cidrs(conf["iface"])
