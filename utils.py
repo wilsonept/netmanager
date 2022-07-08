@@ -38,7 +38,7 @@ def validate_conf(conf) -> bool:
         print("В файле конфигурации не указан основной шлюз.",
             "\nОн будет выбран по основному маршруту.")
     
-        conf["gateway"] = get_gateway(conf["iface"])
+        conf["gateway"] = get_gateway()
 
     return True
 
@@ -71,7 +71,7 @@ def get_iface_cidrs(iface) -> list:
         return result
 
 # Получаем адрес роутера.
-def get_gateway(iface: str):
+def get_gateway():
     """Получает ip адрес шлюза"""
     args = ["ip", "-o", "-4", "route", "show", "to", "default"]
     sproc = subprocess.run(args, capture_output=True)
@@ -105,7 +105,7 @@ def set_iface_link(conf: dict, state: str):
     
     
 # Добавление/удаление адреса.
-def set_iface_ip(conf: dict, action: str, addr: str, mask: str):
+def set_iface_ip(conf: dict, action: str, cidr: str):
     """
     Функция добавления/удаления интерфейса.
     Принимает:
@@ -123,25 +123,27 @@ def set_iface_ip(conf: dict, action: str, addr: str, mask: str):
 
     # Добавляем/удаляем ip адрес.
     ip_addr_sh = os.getcwd() + "/scripts/" + "ip_addr.sh"
-    args = ["sudo", ip_addr_sh, iface, action, addr, mask, gate]
+    args = ["sudo", ip_addr_sh, iface, action, cidr, gate]
     sproc_link = subprocess.run(args, capture_output=True)
     if sproc_link.stderr:
         raise Exception(sproc_link.stderr)
 
 # TODO Изменение адреса/маски.
-def set_iface_ip_mask(iface: str, old_addr: str, old_mask,
-                      addr: str, mask: str):
+def set_iface_ip_mask(conf: dict, old_cidr: str, cidr: str):
     """
     Изменяет указанный ip и маску на указанном интерфейсе
     путем пересоздания адреса интерфейса.
     """
 
+    iface = conf["iface"]
+
     # Удаляет указанный CIDR адрес.
-    set_iface_ip(iface, "del", old_addr, old_mask)
+    set_iface_ip(iface, "del", old_cidr)
+
     time.sleep(2)
 
     # Добавляет указанный CIDR адрес.
-    set_iface_ip(iface, "add", addr, mask)
+    set_iface_ip(iface, "add", cidr)
 
 
 if __name__ == "__main__":
@@ -166,16 +168,16 @@ if __name__ == "__main__":
     
     # Добавление/удаление ip адреса.
     print(f"\n{set_iface_ip.__name__}",
-          set_iface_ip(conf, "del", "10.0.0.0", "24"))
+          set_iface_ip(conf, "del", "10.0.0.0/24"))
 
     print(f"\n{set_iface_ip.__name__}",
-          set_iface_ip(conf["iface"], "add", "10.0.0.0", "24"))
+          set_iface_ip(conf["iface"], "add", "10.0.0.0/24"))
 
     # Изменение адреса/маски.
     print(f"\n{set_iface_ip_mask.__name__}",
-          set_iface_ip_mask(conf["iface"], "10.0.0.0", "24", "10.1.1.1", "24")
+          set_iface_ip_mask(conf["iface"], "10.0.0.0/24", "10.1.1.1/24")
     )
 
     print(f"\n{set_iface_ip_mask.__name__}",
-          set_iface_ip_mask(conf["iface"], "10.1.1.1", "24", "10.0.0.0", "24")
+          set_iface_ip_mask(conf, "10.1.1.1/24", "10.0.0.0/24")
     )

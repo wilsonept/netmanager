@@ -34,6 +34,7 @@ def admin():
     cidrs = get_iface_cidrs(conf["iface"])
     
     addresses = {cidr:cidr for cidr in cidrs}
+    addresses["new"] = ""
     form = AdminForm(addresses=addresses)
     if current_user.is_authenticated:
 
@@ -74,28 +75,44 @@ def logout():
 @app.route("/update_iface", methods=["POST"])
 def update_iface():
     cidrs = get_iface_cidrs(conf["iface"])
+    new_cidrs = []
+    to_delete = []
 
-    # Получаем ключи из request
-    addrs = []
-    masks = []
-    for key in request.form.keys():
-        a = re.search("addresses-\d+-address", key)
-        m = re.search("addresses-\d+-netmask", key)
-        if a:
-            addrs.append(a.group(0))
-        if m:
-            masks.append(m.group(0))
+    # Получаем заполненые поля из формы.
+    for key, value in request.form.items():
+        if key.endswith("cidr") and value != "":
+            new_cidrs.append(value)
 
-    # Соединяем адрес и маску и сравниваем с тем что было.
-    for i in range(len(addrs)):
-        new_addr = request.form[addrs[i]] + "/" + request.form[masks[i]]
-        if cidrs[i] != new_addr:
+        # Получаем cidr'ы помеченные на удаление.
+        if key.endswith("delete"):
+            r = re.search("(addresses-\d+)", key)
+            to_delete.append(request.form[f"{r.group(0)}-cidr"])
+
+    # Добавляем адрес.
+    if len(new_cidrs) > len(cidrs):
+        try:
+            set_iface_ip(conf, "add", new_cidrs[-1])
+        except Exception:
+            # TODO Хорошо бы разобраться почему ошибка.
+            print('Что то не понятное :(')
+    
+    # Удаляем помеченные на удаление.
+    for cidr in to_delete:
+        try:
+            set_iface_ip(conf, "del", cidr)
+        except Exception:
+            # TODO Хорошо бы разобраться почему ошибка.
+            print('Что то не понятное :(')
+
+    # Изменяем адреса/маски
+    cidrs = get_iface_cidrs(conf["iface"])
+    new_cidrs = [cidr for cidr in new_cidrs if not cidr in to_delete]
+    for i in range(len(new_cidrs)):
+        if new_cidrs[i] != cidrs[i]:
             kwargs = {
                 "iface": conf,
-                "old_addr": cidrs[i].split("/")[0],
-                "old_mask": cidrs[i].split("/")[1],
-                "addr": request.form[addrs[i]],
-                "mask": request.form[masks[i]],
+                "old_cidr": cidrs[i],
+                "cidr": new_cidrs[i]
             }
             try:
                 set_iface_ip_mask(**kwargs)

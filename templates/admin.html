@@ -16,13 +16,13 @@
             {% for address_entry_form in form.addresses %}
                 {{ address_entry_form.hidden_tag() }}
 
-                <label class="my-2 form-label">{{ address_entry_form.address.label }}</label>
-                {% set a_value = address_entry_form.object_data.split("/")[0] %}
-                {{ address_entry_form.address(value=a_value, class_="form-control") }}
-
-                <label class="my-2 form-label">{{ address_entry_form.netmask.label }}</label>
-                {% set m_value = address_entry_form.object_data.split("/")[1] %}
-                {{ address_entry_form.netmask(value=m_value, class_="form-control") }}
+                <label class="my-2 form-label">{{ address_entry_form.cidr.label }}</label>
+                {% if address_entry_form.object_data != "new" %}
+                    {% set value=address_entry_form.object_data %}
+                {% else %}
+                    {% set value="" %}
+                {% endif %}
+                {{ address_entry_form.cidr(value=value, class_="form-control") }}
 
                 <label class="my-2 form-label">{{ address_entry_form.delete.label }}</label>
                 {{ address_entry_form.delete }}
